@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
+const { MongoClient, ServerApiVersion } = require("mongodb");
+const { useSearchParams } = require("react-router-dom");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -23,7 +24,30 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
+
+    const instructorsCollection = client
+      .db("allYogaDB")
+      .collection("instructors");
+
+    const usersCollection = client.db("allYogaDB").collection("users");
+
+    app.get("/instructors", async (req, res) => {
+      const result = await instructorsCollection.find().toArray();
+      res.send(result);
+    });
+
+    // user
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = user.email;
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send(existingUser);
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
