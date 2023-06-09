@@ -1,8 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const { useSearchParams } = require("react-router-dom");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -30,6 +31,14 @@ async function run() {
       .db("allYogaDB")
       .collection("instructors");
     const usersCollection = client.db("allYogaDB").collection("users");
+
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "10d",
+      });
+      res.send({token})
+    });
 
     app.get("/instructors", async (req, res) => {
       const result = await instructorsCollection.find().toArray();
