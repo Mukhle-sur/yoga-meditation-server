@@ -84,7 +84,7 @@ async function run() {
     });
 
     // class related api
-    app.get("/classes", async (req, res) => {
+    app.get("/allClasses", verifyJWT, async (req, res) => {
       const result = await classesCollection.find().toArray();
       res.send(result);
     });
@@ -94,6 +94,20 @@ async function run() {
       const result = await classesCollection.insertOne(instructorClass);
       res.send(result);
     });
+    // status change by admin classes
+    app.patch("/users/approved/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "Approved",
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+
     // instructor related api
     app.get("/instructors", async (req, res) => {
       const query = { role: "Instructor" };
@@ -118,9 +132,8 @@ async function run() {
     });
 
     // role change to user
-    app.patch("/users/admin/:id", async (req, res) => {
+    app.patch("/users/admin/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
@@ -130,9 +143,9 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
-    app.patch("/users/instructor/:id", async (req, res) => {
+
+    app.patch("/users/instructor/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
