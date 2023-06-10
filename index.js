@@ -37,11 +37,13 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "10d",
       });
-      res.send({token})
+      res.send({ token });
     });
 
+    // instructor related api
     app.get("/instructors", async (req, res) => {
-      const result = await instructorsCollection.find().toArray();
+      const query = { role: "Instructor" };
+      const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
 
