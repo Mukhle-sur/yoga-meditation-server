@@ -107,6 +107,27 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/users/denied/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "denied",
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+    });
+    app.put("/users/feedback/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const feedback=req.body.feedback
+      const updateDoc = {
+        $set: {
+          feedback: feedback,
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+    });
 
     // instructor related api
     app.get("/instructors", async (req, res) => {
