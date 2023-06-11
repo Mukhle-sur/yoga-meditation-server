@@ -84,11 +84,32 @@ async function run() {
     });
 
     // class related api
-    app.get("/allClasses", verifyJWT, async (req, res) => {
+    app.get("/allClasses", async (req, res) => {
       const result = await classesCollection.find().toArray();
       res.send(result);
     });
-    app.post("/addClasses", verifyJWT, verifyInstructor, async (req, res) => {
+
+    // show classes by email
+    app.get(
+      "/allClasses/:instructorEmail",
+
+      async (req, res) => {
+        const instructorEmail = req.params.instructorEmail;
+        console.log(instructorEmail);
+        const query = { instructorEmail: instructorEmail };
+        const classes = await classesCollection.find(query).toArray();
+        res.send(classes);
+      }
+    );
+
+    // show approved class
+    app.get("/allApprovedClasses", async (req, res) => {
+      const query = { status: "Approved" };
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/addClasses", verifyJWT, async (req, res) => {
       const instructorClass = req.body;
       console.log(instructorClass);
       const result = await classesCollection.insertOne(instructorClass);
@@ -112,15 +133,18 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          status: "denied",
+          status: "Denied",
         },
       };
       const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
+
+    // feedBack TODO
     app.put("/users/feedback/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const feedback=req.body.feedback
+      const feedback = req.body.feedback;
       const updateDoc = {
         $set: {
           feedback: feedback,
