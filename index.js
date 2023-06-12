@@ -51,6 +51,7 @@ async function run() {
 
     const classesCollection = client.db("allYogaDB").collection("classes");
     const usersCollection = client.db("allYogaDB").collection("users");
+    const addClassCollection = client.db("allYogaDB").collection("addClass");
 
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
@@ -89,13 +90,25 @@ async function run() {
       res.send(result);
     });
 
+    // add to class by student
+    app.get('/studentAddClasses', async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await addClassCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.post('/studentAddClasses',async(req,res)=>{
+      const studentClass=req.body;
+      const result=await addClassCollection.insertOne(studentClass);
+      res.send(result)
+    })
+
     // show classes by email
     app.get(
       "/allClasses/:instructorEmail",
 
       async (req, res) => {
         const instructorEmail = req.params.instructorEmail;
-        console.log(instructorEmail);
         const query = { instructorEmail: instructorEmail };
         const classes = await classesCollection.find(query).toArray();
         res.send(classes);
