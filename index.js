@@ -1,6 +1,7 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+const stripe = require("stripe")(process.env.PAYMENT_STRIPE_KEY);
 const jwt = require("jsonwebtoken");
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -52,6 +53,7 @@ async function run() {
     const classesCollection = client.db("allYogaDB").collection("classes");
     const usersCollection = client.db("allYogaDB").collection("users");
     const addClassCollection = client.db("allYogaDB").collection("addClass");
+    const paymentsCollection = client.db("allYogaDB").collection("payments");
 
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
@@ -91,17 +93,43 @@ async function run() {
     });
 
     // add to class by student
-    app.get('/studentAddClasses', async (req, res) => {
+    app.get("/studentAddClasses", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const result = await addClassCollection.find(query).toArray();
       res.send(result);
     });
-    app.post('/studentAddClasses',async(req,res)=>{
-      const studentClass=req.body;
-      const result=await addClassCollection.insertOne(studentClass);
-      res.send(result)
-    })
+    app.post("/studentAddClasses", async (req, res) => {
+      const studentClass = req.body;
+      const result = await addClassCollection.insertOne(studentClass);
+      res.send(result);
+    });
+    app.delete("/studentAddClasses/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await addClassCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.get("/singleClass/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const result = await addClassCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.put("/afterPaymentBooked/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          paid: "paid",
+        },
+      };
+      const result = await addClassCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
     // show classes by email
     app.get(
@@ -128,6 +156,7 @@ async function run() {
       const result = await classesCollection.insertOne(instructorClass);
       res.send(result);
     });
+
     // status change by admin classes
     app.patch("/users/approved/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
@@ -237,6 +266,30 @@ async function run() {
       const result = { instructor: user?.role === "Instructor" };
       res.send(result);
     });
+
+    // payment
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentsCollection.insertOne(payment);
+      res.send({ insertResult });
+    });
+
+    
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
