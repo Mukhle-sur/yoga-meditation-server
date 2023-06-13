@@ -92,6 +92,18 @@ async function run() {
       res.send(result);
     });
 
+    // show popular Classes
+    app.get("/showPopularClasses", async (req, res) => {
+      const query = { paid: "paid" };
+      const result = await addClassCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/showPopularInstructor", async (req, res) => {
+      const query = { paid: "paid" };
+      const result = await addClassCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // add to class by student
     app.get("/studentAddClasses", async (req, res) => {
       const email = req.query.email;
@@ -131,8 +143,8 @@ async function run() {
       res.send(result);
     });
 
-    // student enrolled classes api 
-    app.get('/allEnrolledClasses', verifyJWT, async (req, res) => {
+    // student enrolled classes api
+    app.get("/allEnrolledClasses", verifyJWT, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         return res.send([]);
@@ -141,15 +153,16 @@ async function run() {
       const decodedEmail = req.decoded.email;
 
       if (email !== decodedEmail) {
-        return res.status(403).send({ error: true, message: 'Forbidden access' });
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden access" });
       }
       const query = { email: email };
       const result = await paymentsCollection.find(query).toArray();
       res.send(result);
-
     });
 
-    // show classes by email
+    // show classes by email an instructor
     app.get(
       "/allClasses/:instructorEmail",
 
@@ -160,6 +173,32 @@ async function run() {
         res.send(classes);
       }
     );
+
+    // instructor related api
+    app.get("/instructors", async (req, res) => {
+      const query = { role: "Instructor" };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.put("/updateClass/:id", async (req, res) => {
+      const id = req.params.id;
+      const options = { upsert: true };
+      const filter = { _id: new ObjectId(id) };
+      const updateClass = req.body;
+      const classes = {
+        $set: {
+          price: updateClass.price,
+          availableSeat: updateClass.availableSeat,
+          className: updateClass.className,
+        },
+      };
+      const result = await classesCollection.updateOne(
+        filter,
+        classes,
+        options
+      );
+      res.send(result);
+    });
 
     // show approved class
     app.get("/allApprovedClasses", async (req, res) => {
@@ -205,18 +244,13 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const feedback = req.body.feedback;
+      console.log(feedback);
       const updateDoc = {
         $set: {
           feedback: feedback,
         },
       };
       const result = await classesCollection.updateOne(filter, updateDoc);
-    });
-
-    // instructor related api
-    app.get("/instructors", async (req, res) => {
-      const query = { role: "Instructor" };
-      const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -304,16 +338,6 @@ async function run() {
       const insertResult = await paymentsCollection.insertOne(payment);
       res.send({ insertResult });
     });
-
-
-    // show popular Classes 
-    app.get('/showPopularClass',async(req,res)=>{
-      const query = {paid:'paid'};
-      const result = await bookedClassCollections.find(query).toArray();
-      res.send(result)
-    })
-    
-
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
