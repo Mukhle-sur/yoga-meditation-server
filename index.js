@@ -131,6 +131,24 @@ async function run() {
       res.send(result);
     });
 
+    // student enrolled classes api 
+    app.get('/allEnrolledClasses', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        return res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'Forbidden access' });
+      }
+      const query = { email: email };
+      const result = await paymentsCollection.find(query).toArray();
+      res.send(result);
+
+    });
+
     // show classes by email
     app.get(
       "/allClasses/:instructorEmail",
@@ -281,13 +299,19 @@ async function run() {
       });
     });
 
-
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentsCollection.insertOne(payment);
       res.send({ insertResult });
     });
 
+
+    // show popular Classes 
+    app.get('/showPopularClass',async(req,res)=>{
+      const query = {paid:'paid'};
+      const result = await bookedClassCollections.find(query).toArray();
+      res.send(result)
+    })
     
 
 
