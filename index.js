@@ -270,8 +270,15 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users-findUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
     // role change to user
-    app.patch("/users/admin/:id", verifyJWT, async (req, res) => {
+    app.patch("/users/admin/:id",  async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -283,7 +290,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/instructor/:id", verifyJWT, async (req, res) => {
+    app.patch("/users/instructor/:id",  async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
